@@ -1,0 +1,28 @@
+const assert=require('node:assert/strict');const L=require('../Resources/logic.js');
+assert.deepEqual(['☆☆☆','★☆☆','★★☆','★★★','★★★★',''].map(L.severity),[0,1,2,3,4,-1]);
+assert.equal(L.days('2026-10-15',new Date(2026,9,15,23,59)),0);
+assert.equal(L.days('2026-10-14',new Date(2026,9,15,0,1)),-1);
+assert.equal(L.days('2026-03-09',new Date(2026,2,8,12)),1);
+assert.equal(L.days(null),null);
+assert.deepEqual(L.deadline({hard:'2026-10-16',soft:'2026-10-14'}),{value:'2026-10-16',kind:'hard'});
+assert.deepEqual(L.deadline({hard:null,soft:'2026-10-14'}),{value:'2026-10-14',kind:'soft'});
+assert.equal(L.active(['DONE','~done','missed','abandon','TO-DO','blocked'].map(status=>({status}))).length,2);
+console.log('Passed: severity mapping, unknown severity, local calendar deadlines, DST, deadline selection, completed status filtering.');
+assert.deepEqual(L.completed(['DONE','~done','missed','abandon','TO-DO'].map(status=>({status}))).map(r=>r.status),['DONE','~done']);
+
+const B=L.benefit;
+assert.deepEqual(['☆☆☆','★☆☆','★★☆','★★★','★★★★',''].map(v=>B(v)),[0,1,2,3,4,-1]);
+assert.deepEqual([null,undefined,'n/a'].map(v=>B(v)),[-1,-1,-1]);
+assert.deepEqual(['low','Medium','high','Very high','none','huge'].map(v=>B(v)),[1,2,3,4,0,4]);
+assert.deepEqual(['💰','💰💰💰','$$$$'].map(v=>B(v)),[1,3,4]);
+assert.deepEqual([0,2,4,9].map(v=>B(v,4)),[0,2,4,4]);
+assert.deepEqual([1,3,5].map(v=>B(v,5)),[1,2,4]);
+assert.equal(B('3 - solid win',5),2);
+assert.equal(L.benefitScale([{benefit:0.2},{benefit:0.9}]),1);
+assert.equal(L.benefitScale([{benefit:2},{benefit:5}]),5);
+assert.equal(L.benefitScale([{benefit:40},{benefit:null},{benefit:'★★'}]),100);
+assert.equal(L.points({benefit:'★★★★',hard:'2026-10-20',edited:'2026-10-18T12:00:00Z'}),125);
+assert.equal(L.points({benefit:'★★★★',hard:'2026-10-20',edited:'2026-10-22T12:00:00Z'}),100);
+assert.equal(L.points({benefit:null,severity:'★★★★',hard:null,edited:'2026-10-22T12:00:00Z'}),10);
+assert.equal(L.points({benefit:8,soft:'2026-10-20',edited:'2026-10-19T12:00:00Z'},'auto',10),95);
+console.log('Passed: benefit parsing (stars, numbers, words, repeated symbols), scale detection, benefit-based points and on-time bonus.');
